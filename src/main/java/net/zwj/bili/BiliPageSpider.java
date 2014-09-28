@@ -35,7 +35,7 @@ public class BiliPageSpider {
 				}
 
 			}
-		}, 0,30, TimeUnit.MINUTES);
+		}, 0,60, TimeUnit.MINUTES);
 	}
 
 	private static void dealSpider() {

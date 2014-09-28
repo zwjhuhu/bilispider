@@ -220,6 +220,7 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<finalName>${project.name}</finalName>
 		<pluginManagement>
 			<plugins>
 				<!--This plugin's configuration is used to store Eclipse m2e settings 
