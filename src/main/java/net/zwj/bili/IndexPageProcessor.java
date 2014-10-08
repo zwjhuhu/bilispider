@@ -72,15 +72,15 @@ public class IndexPageProcessor implements PageProcessor {
 		} else {
 			// 首页上面的东西基本上都是ajax的,简单起见直接写死地址
 			// 1.首页排行
-			 page.addTargetRequest("http://www.bilibili.com/index/ranking.json");
-			 page.addTargetRequest("http://www.bilibili.com/index/ranking-3day.json");
-			 page.addTargetRequest("http://www.bilibili.com/index/ranking-week.json");
+			page.addTargetRequest("http://www.bilibili.com/index/ranking.json");
+			page.addTargetRequest("http://www.bilibili.com/index/ranking-3day.json");
+			page.addTargetRequest("http://www.bilibili.com/index/ranking-week.json");
 
 			// 2.推广
-			 page.addTargetRequest("http://www.bilibili.com/index/promote.json");
+			page.addTargetRequest("http://www.bilibili.com/index/promote.json");
 
 			// 3.分区动态
-			 page.addTargetRequest("http://www.bilibili.com/index/ding.json");
+			page.addTargetRequest("http://www.bilibili.com/index/ding.json");
 
 			// 4.分区排行
 			page.addTargetRequest("http://www.bilibili.com/index/catalogy/1-3day.json");
@@ -301,15 +301,6 @@ public class IndexPageProcessor implements PageProcessor {
 		video.setAreaname(areaMap.get(areacode));
 		video.setBilicode(areacode);
 
-		String area = null;
-		area = jv.getTypeid();
-		if (area != null && !area.trim().isEmpty()) {
-			video.setBilicode(area);
-		}
-		area = jv.getTypename();
-		if (area != null && !area.trim().isEmpty()) {
-			video.setAreaname(area);
-		}
 		return video;
 	}
 

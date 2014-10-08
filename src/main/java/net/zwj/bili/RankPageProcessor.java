@@ -5,8 +5,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import net.zwj.bili.model.RankingJsonVideo;
 import net.zwj.bili.model.RankingVideoInfo;
+import net.zwj.bili.util.BiliUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +18,8 @@ import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.processor.PageProcessor;
-import us.codecraft.webmagic.selector.Selectable;
+
+import com.alibaba.fastjson.JSON;
 
 /**
  * 排行表页面处理
@@ -29,101 +33,138 @@ public class RankPageProcessor implements PageProcessor {
 	private Site site = Site.me().setRetryTimes(3).setSleepTime(1000)
 			.setTimeOut(15 * 1000);
 
+	private boolean inited = false;
+
+	private List<String> kinds = new ArrayList<String>();
+	private Map<String, String> typeMap = new HashMap<String, String>();
+
+	private Map<String, String> categoryMap = new HashMap<String, String>();
+
+	private Map<String, String> urlMap = new HashMap<String, String>();
+
+	private void initRankUrls() {
+		if (inited) {
+			return;
+		}
+		kinds.add(RankingVideoInfo.KIND_ALL);
+		kinds.add(RankingVideoInfo.KIND_ORIGIN);
+
+		typeMap.put("1", RankingVideoInfo.TYPE_DAY);
+		typeMap.put("3", RankingVideoInfo.TYPE_3DAY);
+		typeMap.put("7", RankingVideoInfo.TYPE_WEEK);
+		typeMap.put("30", RankingVideoInfo.TYPE_MONTH);
+
+		categoryMap.put("0", "全站");
+		categoryMap.put("1", "动画");
+		categoryMap.put("3", "音乐");
+		categoryMap.put("129", "舞蹈");
+		categoryMap.put("4", "游戏");
+		categoryMap.put("36", "科技");
+		categoryMap.put("5", "娱乐");
+		categoryMap.put("23", "电影");
+		categoryMap.put("119", "鬼畜");
+		categoryMap.put("11", "电视剧");
+		// 新番独立的，暂不处理
+		// categoryMap.put("33", "新番");
+
+		String urlPrefix = "http://www.bilibili.com/index/rank/";
+		String url = "";
+		Set<String> keys1 = typeMap.keySet();
+		Set<String> keys2 = categoryMap.keySet();
+		for (String str : kinds) {
+			for (String k1 : keys1) {
+				for (String k2 : keys2) {
+					url = str + "-" + k1 + "-" + k2;
+					urlMap.put(urlPrefix + url + ".json", url);
+				}
+			}
+		}
+	}
+
 	@Override
 	public void process(Page page) {
 
-		String url = page.getUrl().toString();
-		String type = null;
-		if (url.equals("http://www.bilibili.com/ranking-day")) {
-			type = RankingVideoInfo.TYPE_DAY;
-		} else if (url.equals("http://www.bilibili.com/ranking-week")) {
-			type = RankingVideoInfo.TYPE_WEEK;
-		} else if (url.equals("http://www.bilibili.com/ranking")) {
-			type = RankingVideoInfo.TYPE_MONTH;
-		} else {
-			logger.error("ranking page: " + url + "not config!");
-		}
-		if (type != null) {
-			Map<String, List<RankingVideoInfo>> rankvideos = new HashMap<String, List<RankingVideoInfo>>();
-			rankvideos = extractRankingVedioInfosFromDiv(
-					page.getHtml().xpath("//div[@class='ranking_list']"), type);
-			page.putField("type", type);
-			page.putField("rankvideos", rankvideos);
-		}
-
-	}
-
-	private RankingVideoInfo extractRankingVedioInfo(Selectable contnode) {
-		RankingVideoInfo video = new RankingVideoInfo();
-		String avcode = contnode.xpath("div/a/@href").toString();
-		if (avcode.endsWith("/")) {
-			avcode = avcode.substring(0, avcode.length() - 1);
-		}
-		avcode = avcode.substring(avcode.lastIndexOf('/') + 1);
-		video.setAvcode(avcode);
-		Integer pts = 0;
-		String spts = contnode.xpath("div/div[@class='pts']/text()").toString();
-		spts = spts.replaceAll("\\s+", "").replace("pts", "");
-		try {
-			pts = Integer.parseInt(spts);
-		} catch (RuntimeException e) {
-			logger.warn("pts parse error!", e);
-		}
-		video.setPts(pts);
-
-		video.setImg(contnode.xpath("div/a/div[@class='preview']/img/@src")
-				.toString());
-		video.setTitle(contnode.xpath("div/a/div[@class='title']/@title")
-				.toString());
-		return video;
-	}
-
-	private Map<String, List<RankingVideoInfo>> extractRankingVedioInfosFromDiv(
-			Selectable node, String type) {
-
-		if (logger.isDebugEnabled()) {
-			logger.debug("rankingpage: " + node.toString());
-		}
-		List<Selectable> heads = node.xpath(
-				"div/div[@class='r_header']/div[@class='t']").nodes();
-		List<Selectable> videols = node.xpath(
-				"div/ul[@class='list']/li[@class='l']").nodes();
-
-		Map<String, List<RankingVideoInfo>> rankvideos = new HashMap<String, List<RankingVideoInfo>>();
-		if (!heads.isEmpty()) {
-			List<RankingVideoInfo> ranklist = null;
-			int size = heads.size();
-			int index = 0;
-			String category = "";
-
-			RankingVideoInfo info;
-			Date opertime = new Date();
-			Selectable li = null;
-			List<Selectable> vnodes = null;
-			int vlen = 0;
-			while (index < size) {
-				li = videols.get(index);
-				category = heads.get(index).xpath("div/text()").toString()
-						.trim();
-				vnodes = li.xpath("li//div[@class='rankv']").nodes();
-				vlen = vnodes.size();
-				ranklist = new ArrayList<RankingVideoInfo>(vlen);
-
-				for (int i = 0; i < vlen; i++) {
-					info = extractRankingVedioInfo(vnodes.get(i));
-					info.setCategory(category);
-					info.setRank(i + 1);
-					info.setOpertime(opertime);
-					info.setType(type);
-					ranklist.add(info);
-				}
-				rankvideos.put(category, ranklist);
-				index++;
+		if (!inited) {
+			initRankUrls();
+			Set<String> urls = urlMap.keySet();
+			for (String url : urls) {
+				page.addTargetRequest(url);
 			}
+			inited = true;
+			return;
 		}
 
-		return rankvideos;
+		String url = page.getUrl().toString();
+		if (url.trim().isEmpty()) {
+			page.setSkip(true);
+			return;
+		}
+		if (url.endsWith(".json")) {
+			String key = urlMap.get(url);
+			if (key != null) {
+				String[] ks = key.split("-");
+				if (ks != null && ks.length == 3) {
+					String kind = ks[0];
+					String type = typeMap.get(ks[1]);
+					String category = categoryMap.get(ks[2]);
+					page.putField("kind", kind);
+					page.putField("type", type);
+					page.putField("category", category);
 
+					List<RankingVideoInfo> rankvideos = extractVedioInfosFromJson(
+							page, "$.rank.list", kind, type, category);
+					page.putField("rankvideos", rankvideos);
+				}
+			}
+
+		} else {
+
+		}
+	}
+
+	private List<RankingVideoInfo> extractVedioInfosFromJson(Page page,
+			String jsonpath, String kind, String type, String category) {
+		List<RankingVideoInfo> list = new ArrayList<RankingVideoInfo>();
+		try {
+			List<String> jsons = page.getJson().jsonPath(jsonpath).all();
+			RankingVideoInfo video = null;
+			int len = jsons.size();
+			for (int i = 0; i < len; i++) {
+				video = extractVedioInfoFromJson(jsons.get(i));
+				video.setRank(i + 1);
+				video.setKind(kind);
+				video.setType(type);
+				video.setCategory(category);
+				list.add(video);
+			}
+
+		} catch (RuntimeException e) {
+			logger.warn("json error!", e);
+		}
+		return list;
+	}
+
+	private RankingVideoInfo extractVedioInfoFromJson(String json) {
+
+		logger.debug("ranking json: " + json);
+		RankingVideoInfo video = null;
+		RankingJsonVideo jv = JSON.parseObject(json, RankingJsonVideo.class);
+		video = new RankingVideoInfo();
+		video.setPts(BiliUtils.parseInteger(jv.getPts()));
+		video.setAvcode("av" + jv.getAid());
+		video.setCoin(BiliUtils.parseInteger(jv.getCoins()));
+		video.setDescription(jv.getDescription());
+		video.setDm(BiliUtils.parseInteger(jv.getVideo_review()));
+		video.setGk(BiliUtils.parseInteger(jv.getPlay()));
+		video.setPl(BiliUtils.parseInteger(jv.getReview()));
+		video.setSc(BiliUtils.parseInteger(jv.getFavorites()));
+		video.setTgtime(BiliUtils.translateDate(jv.getCreate()));
+		video.setTitle(jv.getTitle());
+		video.setImg(jv.getPic());
+		video.setUp(jv.getAuthor());
+		video.setOpertime(new Date());
+
+		return video;
 	}
 
 	@Override
@@ -134,8 +175,6 @@ public class RankPageProcessor implements PageProcessor {
 	public static void main(String[] args) {
 
 		Spider.create(new RankPageProcessor())
-				.addUrl("http://www.bilibili.com/ranking-day")
-				.addUrl("http://www.bilibili.com/ranking-week")
 				.addUrl("http://www.bilibili.com/ranking")
 				.addPipeline(new RankPagePipeline()).thread(1).run();
 	}

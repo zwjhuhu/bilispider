@@ -59,12 +59,10 @@ public class BiliPageSpider {
 
 		// 排行榜页面处理
 		time = System.currentTimeMillis();
-		logger.info("begin ranking page ");
+		logger.info("begin ranking pages ");
 		Spider.create(new RankPageProcessor())
-				.addUrl("http://www.bilibili.com/ranking-day")
-				.addUrl("http://www.bilibili.com/ranking-week")
-				.addUrl("http://www.bilibili.com/ranking")
-				.addPipeline(new RankPagePipeline()).thread(1).run();
+		.addUrl("http://www.bilibili.com/ranking")
+		.addPipeline(new RankPagePipeline()).thread(1).run();
 		logger.info("end ranking page [" + (System.currentTimeMillis() - time)
 				+ "ms]");
 	}

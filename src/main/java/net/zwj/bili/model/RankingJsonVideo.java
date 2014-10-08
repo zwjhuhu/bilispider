@@ -1,6 +1,12 @@
 package net.zwj.bili.model;
 
-public class JsonVideo {
+/**
+ * 排行页面数据json
+ * 
+ * @author zhouwj
+ * 
+ */
+public class RankingJsonVideo {
 	private String aid;
 	private String title;
 	private String play;
@@ -13,7 +19,7 @@ public class JsonVideo {
 	private String create;
 	private String pic;
 	private String coins;
-	private String duration;
+	private String pts;
 
 	public String getAid() {
 		return aid;
@@ -111,11 +117,12 @@ public class JsonVideo {
 		this.coins = coins;
 	}
 
-	public String getDuration() {
-		return duration;
+	public String getPts() {
+		return pts;
 	}
 
-	public void setDuration(String duration) {
-		this.duration = duration;
+	public void setPts(String pts) {
+		this.pts = pts;
 	}
+
 }
