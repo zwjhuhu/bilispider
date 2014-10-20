@@ -106,8 +106,8 @@ public class CategoryPageProcessor implements PageProcessor {
 			} else {
 				List<Selectable> nodes = page.getHtml()
 						.xpath("//div[@class='container-row']").nodes();
-				List<PageVideoInfo> videolist = new ArrayList<PageVideoInfo>();
-				page.putField("videolist", videolist);
+				//List<PageVideoInfo> videolist = new ArrayList<PageVideoInfo>();
+				//page.putField("videolist", videolist);
 
 				for (Selectable sel : nodes) {
 					String sarea = sel.xpath("div/@area").toString();
@@ -124,7 +124,8 @@ public class CategoryPageProcessor implements PageProcessor {
 					String name = ssel.toString().trim();
 					areaMap.putIfAbsent(sarea, name);
 					// 处理頁面上的视频信息
-					List<Selectable> details = sel.xpath(
+					// 现在B站上面的分类动态，使用了一种类似轮询的方式来处理，实时性较高，每次刷新页面的结果都不尽相同,参考性不大
+					/*List<Selectable> details = sel.xpath(
 							"div[@class='b-l']/div[@class='b-body']/ul/li/div")
 							.nodes();
 
@@ -141,7 +142,7 @@ public class CategoryPageProcessor implements PageProcessor {
 							video.setBilicode(sarea);
 							videolist.add(video);
 						}
-					}
+					}*/
 					// 增加动态抓取的数据url
 					page.addTargetRequest("http://www.bilibili.com/index/catalogy/"
 							+ sarea + "-3day.json");
@@ -153,6 +154,7 @@ public class CategoryPageProcessor implements PageProcessor {
 
 	}
 
+	/*
 	private PageVideoInfo extractPageVedioInfoFromDiv(Selectable node) {
 
 		if (logger.isDebugEnabled()) {
@@ -184,7 +186,8 @@ public class CategoryPageProcessor implements PageProcessor {
 		video.setUp(node.xpath("div/@up").toString());
 		return video;
 	}
-
+*/
+	
 	private List<PageVideoInfo> extractHotVedioInfosFromJson(Page page,
 			String jsonpath, String type, String area) {
 		List<PageVideoInfo> list = new ArrayList<PageVideoInfo>();

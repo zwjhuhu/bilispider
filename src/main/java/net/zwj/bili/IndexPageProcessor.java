@@ -130,10 +130,10 @@ public class IndexPageProcessor implements PageProcessor {
 			type = PageVideoInfo.TYPE_INDEX_PREMOTE;
 			jsonpath = "$.list";
 			withrank = false;
-		} else if (url.equals("http://www.bilibili.com/index/ding.json")) {
+		} /*else if (url.equals("http://www.bilibili.com/index/ding.json")) {
 			infos = extractVedioInfosDing(page);
 			specialDealed = true;
-		} else if (url
+		} */else if (url
 				.matches("http://www.bilibili.com/index/catalogy/.+3day.json")) {
 			sarea = url.substring(url.lastIndexOf('/') + 1, url.indexOf('-'));
 			withrank = true;
@@ -178,6 +178,7 @@ public class IndexPageProcessor implements PageProcessor {
 		}
 	}
 
+	/*
 	private List<PageVideoInfo> extractVedioInfosDing(Page page) {
 		List<PageVideoInfo> list = new ArrayList<PageVideoInfo>();
 		try {
@@ -219,7 +220,8 @@ public class IndexPageProcessor implements PageProcessor {
 
 		return list;
 	}
-
+*/
+	
 	private List<PageVideoInfo> extractVedioInfosFromJson(Page page,
 			String jsonpath, String type, String area, boolean withRank,
 			boolean parseArray) {
