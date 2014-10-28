@@ -80,7 +80,7 @@ public class IndexPageProcessor implements PageProcessor {
 			page.addTargetRequest("http://www.bilibili.com/index/promote.json");
 
 			// 3.分区动态
-			page.addTargetRequest("http://www.bilibili.com/index/ding.json");
+			//page.addTargetRequest("http://www.bilibili.com/index/ding.json");
 
 			// 4.分区排行
 			page.addTargetRequest("http://www.bilibili.com/index/catalogy/1-3day.json");
