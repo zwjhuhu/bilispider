@@ -28,16 +28,13 @@ public class RankPagePipeline extends BiliDBPipeline {
 		if (obj != null) {
 			@SuppressWarnings("unchecked")
 			List<RankingVideoInfo> list = (List<RankingVideoInfo>) obj;
-			if (isRankingChanged(list, kind, type, category)) {
-				for (RankingVideoInfo info : list) {
-					DbUtils.insert(info);
-				}
-			}
+			DbUtils.insertBatch(list);
 		}
 
 	}
 
-	private boolean isRankingChanged(List<RankingVideoInfo> list, String kind,
+	//这里如果使用了全表扫描，数据量很大的时候，将会慢的不能直视
+/*	private boolean isRankingChanged(List<RankingVideoInfo> list, String kind,
 			String type, String category) {
 		boolean changed = false;
 		List<RankingVideoInfo> dbList = null;
@@ -77,5 +74,5 @@ public class RankPagePipeline extends BiliDBPipeline {
 		}
 		return changed;
 	}
-
+*/
 }

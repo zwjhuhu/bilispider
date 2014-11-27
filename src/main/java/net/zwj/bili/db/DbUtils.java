@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -190,10 +191,44 @@ public class DbUtils {
 		}
 	}
 
-	public static void insert(DBModel<?> model) {
-		if (model == null) {
-			throw new IllegalArgumentException("model is null!");
+	public static void execUpdateBatch(List<String> sqls,
+			List<List<Object>> paramsList) {
+		Connection conn = getConn();
+		PreparedStatement ps = null;
+		boolean saved = true;
+		try {
+			int count = sqls.size();
+			conn.setAutoCommit(false);
+			String sql;
+			List<Object> params;
+			for (int i = 0; i < count; i++) {
+				sql = sqls.get(i);
+				params = paramsList.get(i);
+				ps = conn.prepareStatement(sql);
+				int len = params.size();
+				for (int j = 1; j <= len; j++) {
+					ps.setObject(j, params.get(j - 1));
+				}
+				ps.executeUpdate();
+			}
+			conn.commit();
+		} catch (Exception e) {
+			saved = false;
+			throw new DataOperationError("save error", e);
+		} finally {
+			if (!saved) {
+				try {
+					conn.rollback();
+				} catch (SQLException e) {
+					logger.error("error!", e);
+				}
+			}
+			closeConn(conn);
 		}
+	}
+
+	private static Map<String,List<Object>> createInsertCmd(DBModel<?> model){
+		Map<String,List<Object>> retMap = new HashMap<String, List<Object>>();
 		Map<String, Method> getMap = modelMapper.findGetMap(model.getClass());
 		String tabname = modelMapper.findTabName(model.getClass());
 		Method getm;
@@ -211,7 +246,7 @@ public class DbUtils {
 					vs.add(val);
 				}
 			} catch (Exception e) {
-				throw new DataOperationError("save error", e);
+				throw new DataOperationError("create insertcmd error", e);
 			}
 		}
 		int len = fs.size();
@@ -228,7 +263,37 @@ public class DbUtils {
 			sb.deleteCharAt(sb.length() - 1);
 			sb.append(")");
 		}
-		execUpdate(sb.toString(), vs);
+		retMap.put(sb.toString(), vs);
+		return retMap;
+	}
+	
+	public static void insert(DBModel<?> model) {
+		if (model == null) {
+			throw new IllegalArgumentException("model is null!");
+		}
+		Map<String,List<Object>> retMap = createInsertCmd(model);
+		String sql = retMap.keySet().iterator().next();
+		List<Object> vs = retMap.get(sql);
+		execUpdate(sql, vs);
+	}
+	
+	public static void insertBatch(List<? extends DBModel<?>> models) {
+		if (models == null||models.isEmpty()) {
+			return ;
+		}
+		List<String> sqls = new ArrayList<String>();
+		List<List<Object>> paramsList = new ArrayList<List<Object>>();
+		Map<String,List<Object>> retMap;
+		String sql;
+		List<Object> vs;
+		for(DBModel<?> model:models){
+			retMap = createInsertCmd(model);
+			sql = retMap.keySet().iterator().next();
+			vs = retMap.get(sql);
+			sqls.add(sql);
+			paramsList.add(vs);
+		}
+		execUpdateBatch(sqls, paramsList);
 	}
 
 	public static void updateById(DBModel<?> model) {
@@ -270,11 +335,11 @@ public class DbUtils {
 		}
 
 		len = nulls.size();
-		if(len>0){
+		if (len > 0) {
 			for (int i = 0; i < len; i++) {
 				sb.append(nulls.get(i)).append(" = null,");
 			}
-			
+
 		}
 		sb.deleteCharAt(sb.length() - 1);
 		sb.append(" where id = ").append(model.getId());
@@ -340,7 +405,7 @@ public class DbUtils {
 	}
 
 	public static <T> T findById(Serializable id, Class<T> clazz) {
-		if(id==null){
+		if (id == null) {
 			throw new IllegalArgumentException("id is null!");
 		}
 		StringBuilder sb = new StringBuilder();

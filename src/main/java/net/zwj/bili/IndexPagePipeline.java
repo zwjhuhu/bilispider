@@ -15,9 +15,7 @@ public class IndexPagePipeline extends BiliDBPipeline {
 		if (obj != null) {
 			@SuppressWarnings("unchecked")
 			List<PageVideoInfo> videolist = (List<PageVideoInfo>) obj;
-			for (PageVideoInfo video : videolist) {
-				DbUtils.insert(video);
-			}
+			DbUtils.insertBatch(videolist);
 		}
 
 	}

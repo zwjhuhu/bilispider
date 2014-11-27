@@ -15,18 +15,14 @@ public class CategoryPagePipeline extends BiliDBPipeline {
 		if (obj != null) {
 			@SuppressWarnings("unchecked")
 			List<PageVideoInfo> list = (List<PageVideoInfo>) obj;
-			for (PageVideoInfo info : list) {
-				DbUtils.insert(info);
-			}
+			DbUtils.insertBatch(list);
 		}
 
 		obj = resultItems.get("hotvideolist");
 		if (obj != null) {
 			@SuppressWarnings("unchecked")
 			List<PageVideoInfo> list = (List<PageVideoInfo>) obj;
-			for (PageVideoInfo info : list) {
-				DbUtils.insert(info);
-			}
+			DbUtils.insertBatch(list);
 		}
 
 	}
