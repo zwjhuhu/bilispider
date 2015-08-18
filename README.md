@@ -1,1 +1,2 @@
 #bilispider
+这玩意是利用webmagic写的一个爬虫，原意是想看一看bilibili上的视频排行的情况，之前，运行了2个多月，发现期间bilibili改版了几次
